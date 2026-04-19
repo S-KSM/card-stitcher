@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html, body, #root { height: 100%; }
+body {
+  margin: 0;
+  background: #FAF8F4;
+  color: #1C1C1E;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', Roboto, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
+}
+* { box-sizing: border-box; }
+
+button { font-family: inherit; }
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* Page flip perspective */
+.flip-stage { perspective: 2400px; }
+
+.flip-out-next,
+.flip-out-prev {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  will-change: transform, opacity;
+  z-index: 2;
+}
+
+.flip-out-next {
+  transform-origin: left center;
+  animation: cs-flip-out-next 520ms cubic-bezier(0.6, 0.02, 0.3, 1) forwards;
+}
+.flip-out-prev {
+  transform-origin: right center;
+  animation: cs-flip-out-prev 520ms cubic-bezier(0.6, 0.02, 0.3, 1) forwards;
+}
+
+@keyframes cs-flip-out-next {
+  0%   { transform: rotateY(0deg); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: rotateY(-150deg); opacity: 0; }
+}
+@keyframes cs-flip-out-prev {
+  0%   { transform: rotateY(0deg); opacity: 1; }
+  80%  { opacity: 1; }
+  100% { transform: rotateY(150deg); opacity: 0; }
+}
+
+.flip-shadow {
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.35) 0%,
+    rgba(0, 0, 0, 0) 25%,
+    rgba(0, 0, 0, 0) 75%,
+    rgba(0, 0, 0, 0.35) 100%
+  );
+}
