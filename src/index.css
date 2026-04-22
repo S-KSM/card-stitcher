@@ -19,46 +19,232 @@ button { font-family: inherit; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 
-/* Page flip perspective */
-.flip-stage { perspective: 2400px; }
+/* Page flip — bound-card feel
+   Structure: stage(perspective) > card-binding > [card-stack, card-face, flip-page, edge-hints]
+   The "flip-page" rotates around the spine, showing front (old image) then its
+   paper back. The static card-face beneath receives a moving curl shadow. */
+.flip-stage { perspective: 2200px; perspective-origin: 50% 40%; }
 
+.card-binding {
+  transform-style: preserve-3d;
+  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.35))
+          drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
+}
+
+/* Stack of pages beneath the top one — subtle offset, shows it's bound */
+.card-stack {
+  position: absolute;
+  inset: 2px -3px -6px 3px;
+  border-radius: 12px;
+  background: #f5efe4;
+  box-shadow:
+    4px 4px 0 -2px #ebe3d3,
+    8px 8px 0 -4px #e0d6c2;
+  z-index: 0;
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  z-index: 1;
+  background: #000;
+}
+
+.card-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 12px;
+  background: #000;
+}
+
+/* Faint spine shadow on the left edge of the visible card — reads as the gutter */
+.spine-shadow {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.28) 0%,
+    rgba(0, 0, 0, 0.08) 3%,
+    rgba(0, 0, 0, 0) 7%
+  );
+}
+
+/* Edge hints — thin warm slivers showing there are more pages on either side */
+.edge-hint {
+  position: absolute;
+  top: 4%;
+  bottom: 4%;
+  width: 3px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, #ede4d0, #d9cdb1);
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+  z-index: 0;
+}
+.edge-hint-right { right: -4px; }
+.edge-hint-left  { left: -4px; }
+
+/* Flipping page — has two faces, rotates around the spine */
 .flip-out-next,
 .flip-out-prev {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  will-change: transform, opacity;
-  z-index: 2;
+  -webkit-transform-style: preserve-3d;
+  will-change: transform;
+  z-index: 3;
 }
 
 .flip-out-next {
   transform-origin: left center;
-  animation: cs-flip-out-next 520ms cubic-bezier(0.6, 0.02, 0.3, 1) forwards;
+  animation: cs-flip-out-next 720ms cubic-bezier(0.45, 0.05, 0.25, 1) forwards;
 }
 .flip-out-prev {
   transform-origin: right center;
-  animation: cs-flip-out-prev 520ms cubic-bezier(0.6, 0.02, 0.3, 1) forwards;
+  animation: cs-flip-out-prev 720ms cubic-bezier(0.45, 0.05, 0.25, 1) forwards;
 }
 
 @keyframes cs-flip-out-next {
-  0%   { transform: rotateY(0deg); opacity: 1; }
-  80%  { opacity: 1; }
-  100% { transform: rotateY(-150deg); opacity: 0; }
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(-178deg); }
 }
 @keyframes cs-flip-out-prev {
-  0%   { transform: rotateY(0deg); opacity: 1; }
-  80%  { opacity: 1; }
-  100% { transform: rotateY(150deg); opacity: 0; }
+  0%   { transform: rotateY(0deg); }
+  100% { transform: rotateY(178deg); }
 }
 
-.flip-shadow {
+.flip-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.flip-face-front {
+  background: #000;
+}
+.flip-face-back {
+  transform: rotateY(180deg);
+  background: #fbf6eb;
+  box-shadow: inset 0 0 80px rgba(120, 90, 50, 0.08);
+}
+
+/* Cream paper texture for the back — subtle grain + a faint center crease */
+.flip-back-paper {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(0,0,0,0) 40%, rgba(120, 90, 50, 0.07) 100%),
+    repeating-linear-gradient(
+      135deg,
+      rgba(120, 90, 50, 0.02) 0px,
+      rgba(120, 90, 50, 0.02) 1px,
+      transparent 1px,
+      transparent 4px
+    );
+  border-radius: 12px;
+}
+
+/* Shade on the front face of the flipping page — darkens as it rotates away */
+.flip-front-shade {
+  position: absolute;
+  inset: 0;
   background: linear-gradient(
     to right,
-    rgba(0, 0, 0, 0.35) 0%,
-    rgba(0, 0, 0, 0) 25%,
-    rgba(0, 0, 0, 0) 75%,
+    rgba(0, 0, 0, 0.0) 0%,
+    rgba(0, 0, 0, 0.0) 30%,
     rgba(0, 0, 0, 0.35) 100%
   );
+  opacity: 0;
+  animation: cs-flip-front-shade 720ms cubic-bezier(0.45, 0.05, 0.25, 1) forwards;
+  pointer-events: none;
+}
+@keyframes cs-flip-front-shade {
+  0%   { opacity: 0; }
+  60%  { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+/* Curl sweep — a soft shadow that moves across the static page as the
+   outgoing page turns over it */
+.curl-sweep {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to right,
+    rgba(0, 0, 0, 0.0) 0%,
+    rgba(0, 0, 0, 0.18) 35%,
+    rgba(0, 0, 0, 0.32) 50%,
+    rgba(0, 0, 0, 0.18) 65%,
+    rgba(0, 0, 0, 0.0) 100%
+  );
+  mix-blend-mode: multiply;
+  opacity: 0;
+  transform: translateX(-100%);
+}
+.curl-sweep-next {
+  animation: cs-curl-next 720ms cubic-bezier(0.45, 0.05, 0.25, 1) forwards;
+}
+.curl-sweep-prev {
+  animation: cs-curl-prev 720ms cubic-bezier(0.45, 0.05, 0.25, 1) forwards;
+}
+@keyframes cs-curl-next {
+  0%   { transform: translateX(-100%); opacity: 0; }
+  20%  { opacity: 0.9; }
+  80%  { opacity: 0.9; }
+  100% { transform: translateX(100%); opacity: 0; }
+}
+@keyframes cs-curl-prev {
+  0%   { transform: translateX(100%); opacity: 0; }
+  20%  { opacity: 0.9; }
+  80%  { opacity: 0.9; }
+  100% { transform: translateX(-100%); opacity: 0; }
+}
+
+/* Indeterminate progress bar for long-running tasks (LLM enhance) */
+@keyframes cs-progress-indet {
+  0%   { transform: translateX(-60%); }
+  100% { transform: translateX(160%); }
+}
+.progress-indet {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.06);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.progress-indet::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, #C2603A, transparent);
+  animation: cs-progress-indet 1.4s ease-in-out infinite;
+}
+
+@keyframes cs-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255,255,255,0) 0%,
+    rgba(194, 96, 58, 0.12) 50%,
+    rgba(255,255,255,0) 100%
+  );
+  background-size: 200% 100%;
+  animation: cs-shimmer 1.8s linear infinite;
 }

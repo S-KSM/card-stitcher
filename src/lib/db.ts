@@ -42,6 +42,10 @@ export async function getBlob(key: string): Promise<Blob | undefined> {
   return (await get<Blob>(BLOB_PREFIX + key)) ?? undefined;
 }
 
+export async function delBlob(key: string): Promise<void> {
+  await del(BLOB_PREFIX + key);
+}
+
 export async function requestPersistence(): Promise<boolean> {
   if (navigator.storage?.persist) {
     try {

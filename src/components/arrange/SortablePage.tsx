@@ -1,15 +1,18 @@
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { X, GripVertical } from 'lucide-react';
+import { EnhanceButton } from '../enhance/EnhanceButton';
 
 interface Props {
   id: string;
   index: number;
   src: string;
+  isEnhanced: boolean;
   onRemove: () => void;
+  onEnhance: () => void;
 }
 
-export function SortablePage({ id, index, src, onRemove }: Props) {
+export function SortablePage({ id, index, src, isEnhanced, onRemove, onEnhance }: Props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id });
 
@@ -45,6 +48,7 @@ export function SortablePage({ id, index, src, onRemove }: Props) {
       >
         <GripVertical size={14} />
       </button>
+      <EnhanceButton pageId={id} isEnhanced={isEnhanced} onClick={onEnhance} />
     </div>
   );
 }

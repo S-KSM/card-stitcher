@@ -36,12 +36,54 @@ export default defineConfig({
         ],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest,woff2}'],
+        globPatterns: ['**/*.{js,mjs,css,html,svg,png,ico,webmanifest,woff2}'],
+        globIgnores: ['**/*.onnx', '**/assets/opencv-*.js'],
         maximumFileSizeToCacheInBytes: 12 * 1024 * 1024,
         navigateFallbackDenylist: [/^\/api\//],
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          {
+            urlPattern: /https:\/\/docs\.opencv\.org\/.*\/opencv\.js$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'opencv-cdn-v1',
+              expiration: { maxEntries: 3, maxAgeSeconds: 60 * 60 * 24 * 90 },
+            },
+          },
+          {
+            urlPattern: /https:\/\/cdn\.jsdelivr\.net\/npm\/onnxruntime-web.*/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ort-runtime-v1',
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              rangeRequests: true,
+            },
+          },
+          {
+            urlPattern: /github\.com\/.*\/releases\/download\/.*\.onnx$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'enhance-models-v1',
+              expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              rangeRequests: true,
+            },
+          },
+          {
+            urlPattern: /objects\.githubusercontent\.com\/.*\.onnx.*/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'enhance-models-v1',
+              expiration: { maxEntries: 5, maxAgeSeconds: 60 * 60 * 24 * 365 },
+              rangeRequests: true,
+            },
+          },
+        ],
       },
       devOptions: { enabled: false },
     }),
   ],
+  worker: { format: 'iife' },
   server: { port: 5173, host: true },
 });

@@ -55,19 +55,38 @@ export function PageFlip({ urls, index, onIndexChange }: Props) {
   };
 
   const current = urls[index];
+  const hasPrev = index > 0;
+  const hasNext = index < urls.length - 1;
 
   return (
     <div className="flip-stage w-full h-full grid place-items-center">
-      <div className="relative max-w-[90vmin] max-h-[80vmin] aspect-[3/4] w-full">
+      <div className="card-binding relative max-w-[90vmin] max-h-[80vmin] aspect-[3/4] w-full">
+        {/* Stack of pages beneath — gives the bound feel */}
+        <div aria-hidden className="card-stack" />
+
+        {/* Current page (revealed beneath the flipping one) */}
         {current && (
-          <img
-            key={current}
-            src={current}
-            alt=""
-            className="absolute inset-0 w-full h-full object-contain rounded-card shadow-2xl bg-black"
-            draggable={false}
-          />
+          <div className="card-face">
+            <img
+              key={current}
+              src={current}
+              alt=""
+              className="card-image"
+              draggable={false}
+            />
+            {/* Spine shadow on the left edge — always present on the active page */}
+            <div aria-hidden className="spine-shadow" />
+            {/* Curl shadow sweeps across while a page is flipping over this one */}
+            {outgoing && outgoing.direction === 'next' && (
+              <div aria-hidden className="curl-sweep curl-sweep-next" />
+            )}
+            {outgoing && outgoing.direction === 'prev' && (
+              <div aria-hidden className="curl-sweep curl-sweep-prev" />
+            )}
+          </div>
         )}
+
+        {/* Flipping page — two-sided (front = old image, back = card paper) */}
         {outgoing && (
           <div
             key={outgoing.url + outgoing.direction}
@@ -76,15 +95,24 @@ export function PageFlip({ urls, index, onIndexChange }: Props) {
             }
             onAnimationEnd={handleAnimationEnd}
           >
-            <img
-              src={outgoing.url}
-              alt=""
-              className="absolute inset-0 w-full h-full object-contain rounded-card shadow-2xl bg-black"
-              draggable={false}
-            />
-            <div className="flip-shadow absolute inset-0 rounded-card pointer-events-none" />
+            <div className="flip-face flip-face-front">
+              <img
+                src={outgoing.url}
+                alt=""
+                className="card-image"
+                draggable={false}
+              />
+              <div aria-hidden className="flip-front-shade" />
+            </div>
+            <div className="flip-face flip-face-back" aria-hidden>
+              <div className="flip-back-paper" />
+            </div>
           </div>
         )}
+
+        {/* Edge hints — faint page edges on the binding side show more pages */}
+        {hasNext && <div aria-hidden className="edge-hint edge-hint-right" />}
+        {hasPrev && <div aria-hidden className="edge-hint edge-hint-left" />}
       </div>
     </div>
   );

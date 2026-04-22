@@ -14,12 +14,15 @@ import {
   sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { SortablePage } from './SortablePage';
+import type { PageAsset } from '../../types/card';
 
 interface Props {
   order: string[];
   urls: Record<string, string>;
+  pages: Record<string, PageAsset>;
   onReorder: (next: string[]) => void;
   onRemove: (id: string) => void;
+  onEnhance: (id: string) => void;
 }
 
 function labelsFor(count: number): string[] {
@@ -34,7 +37,7 @@ function labelsFor(count: number): string[] {
   return out;
 }
 
-export function ThumbStrip({ order, urls, onReorder, onRemove }: Props) {
+export function ThumbStrip({ order, urls, pages, onReorder, onRemove, onEnhance }: Props) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
@@ -61,7 +64,9 @@ export function ThumbStrip({ order, urls, onReorder, onRemove }: Props) {
                 id={id}
                 index={idx}
                 src={urls[id]}
+                isEnhanced={!!pages[id]?.useEnhanced}
                 onRemove={() => onRemove(id)}
+                onEnhance={() => onEnhance(id)}
               />
               <div className="text-[11px] text-ink-muted text-center px-2 py-1 rounded-full bg-border-subtle/50 truncate">
                 {labels[idx]}

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "deploy": "npm run build && wrangler pages deploy dist --project-name=card-stitcher"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.90.0",
@@ -15,11 +16,13 @@
     "@dnd-kit/sortable": "^8.0.0",
     "@dnd-kit/utilities": "^3.2.2",
     "@google/genai": "^1.50.1",
+    "@techstark/opencv-js": "^4.12.0-release.1",
     "file-saver": "^2.0.5",
     "gif.js": "^0.2.0",
     "idb-keyval": "^6.2.1",
     "jszip": "^3.10.1",
     "lucide-react": "^0.453.0",
+    "onnxruntime-web": "^1.24.3",
     "openai": "^6.34.0",
     "pdf-lib": "^1.17.1",
     "react": "^18.3.1",

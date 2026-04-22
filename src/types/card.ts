@@ -32,6 +32,10 @@ export interface PageAsset {
   width: number;
   height: number;
   mime: string;
+  originalBlobKey?: string;
+  enhancedBlobKey?: string;
+  useEnhanced?: boolean;
+  enhanceMeta?: import('../lib/enhance/types').EnhanceMeta;
 }
 
 export interface Card {

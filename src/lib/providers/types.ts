@@ -10,10 +10,30 @@ export interface AutofillInput {
 
 export type AutofillFn = (input: AutofillInput) => Promise<Partial<CardMetadata>>;
 
-export const PROVIDERS: { id: ProviderId; label: string; keyHint: string }[] = [
-  { id: 'anthropic', label: 'Anthropic (Claude)', keyHint: 'sk-ant-...' },
-  { id: 'openai', label: 'OpenAI (GPT)', keyHint: 'sk-...' },
-  { id: 'gemini', label: 'Google (Gemini)', keyHint: 'AIza...' },
+export const PROVIDERS: {
+  id: ProviderId;
+  label: string;
+  keyHint: string;
+  keyUrl: string;
+}[] = [
+  {
+    id: 'anthropic',
+    label: 'Anthropic (Claude)',
+    keyHint: 'sk-ant-...',
+    keyUrl: 'https://console.anthropic.com/settings/keys',
+  },
+  {
+    id: 'openai',
+    label: 'OpenAI (GPT)',
+    keyHint: 'sk-...',
+    keyUrl: 'https://platform.openai.com/api-keys',
+  },
+  {
+    id: 'gemini',
+    label: 'Google (Gemini)',
+    keyHint: 'AIza...',
+    keyUrl: 'https://aistudio.google.com/apikey',
+  },
 ];
 
 export const DEFAULT_MODEL: Record<ProviderId, string> = {

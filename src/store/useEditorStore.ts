@@ -1,8 +1,9 @@
 import { create } from 'zustand';
 import type { Card, CardMetadata, PageAsset } from '../types/card';
 import { DEFAULT_METADATA, MAX_PAGES } from '../types/card';
-import { putBlob, saveCard, loadCard, getBlob } from '../lib/db';
-import { blobUrl, processImageFile, uid } from '../lib/imageUtils';
+import { putBlob, saveCard, loadCard, getBlob, delBlob } from '../lib/db';
+import { blobUrl, processImageFile, revokeBlobUrl, uid } from '../lib/imageUtils';
+import type { EnhanceResult } from '../lib/enhance/types';
 
 interface EditorState {
   cardId: string | null;
@@ -20,6 +21,9 @@ interface EditorState {
   updateMetadata: (patch: Partial<CardMetadata>) => void;
   canAdd: () => number;
   persist: () => Promise<string>;
+  applyEnhance: (pageId: string, result: EnhanceResult) => Promise<void>;
+  toggleEnhanced: (pageId: string) => Promise<void>;
+  discardEnhanced: (pageId: string) => Promise<void>;
 }
 
 export const useEditorStore = create<EditorState>((set, get) => ({
@@ -136,5 +140,74 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     await saveCard(card);
     set({ dirty: false });
     return card.id;
+  },
+
+  applyEnhance: async (pageId, result) => {
+    if (!result.success) return;
+    const state = get();
+    const prev = state.pages[pageId];
+    if (!prev) return;
+    const enhancedKey = result.page.enhancedBlobKey!;
+    const enhancedBlob = await getBlob(enhancedKey);
+    const nextUrl = enhancedBlob ? blobUrl(enhancedKey, enhancedBlob) : state.pageUrls[pageId];
+    const nextPage: PageAsset = {
+      ...prev,
+      blobKey: enhancedKey,
+      width: result.page.width,
+      height: result.page.height,
+      mime: result.page.mime,
+      originalBlobKey: prev.originalBlobKey ?? prev.blobKey,
+      enhancedBlobKey: enhancedKey,
+      useEnhanced: true,
+      enhanceMeta: result.meta,
+    };
+    set((s) => ({
+      pages: { ...s.pages, [pageId]: nextPage },
+      pageUrls: { ...s.pageUrls, [pageId]: nextUrl },
+      dirty: true,
+    }));
+  },
+
+  toggleEnhanced: async (pageId) => {
+    const state = get();
+    const page = state.pages[pageId];
+    if (!page || !page.originalBlobKey || !page.enhancedBlobKey) return;
+    const useEnhanced = !page.useEnhanced;
+    const activeKey = useEnhanced ? page.enhancedBlobKey : page.originalBlobKey;
+    const activeBlob = await getBlob(activeKey);
+    const url = activeBlob ? blobUrl(activeKey, activeBlob) : state.pageUrls[pageId];
+    set((s) => ({
+      pages: {
+        ...s.pages,
+        [pageId]: { ...page, blobKey: activeKey, useEnhanced },
+      },
+      pageUrls: { ...s.pageUrls, [pageId]: url },
+      dirty: true,
+    }));
+  },
+
+  discardEnhanced: async (pageId) => {
+    const state = get();
+    const page = state.pages[pageId];
+    if (!page) return;
+    const enhancedKey = page.enhancedBlobKey;
+    const origKey = page.originalBlobKey;
+    if (!enhancedKey || !origKey) return;
+    await delBlob(enhancedKey);
+    revokeBlobUrl(enhancedKey);
+    const origBlob = await getBlob(origKey);
+    const url = origBlob ? blobUrl(origKey, origBlob) : state.pageUrls[pageId];
+    const { enhanceMeta: _m, enhancedBlobKey: _e, useEnhanced: _u, ...base } = page;
+    void _m;
+    void _e;
+    void _u;
+    set((s) => ({
+      pages: {
+        ...s.pages,
+        [pageId]: { ...base, blobKey: origKey, originalBlobKey: undefined },
+      },
+      pageUrls: { ...s.pageUrls, [pageId]: url },
+      dirty: true,
+    }));
   },
 }));

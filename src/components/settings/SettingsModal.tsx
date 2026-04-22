@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, KeyRound } from 'lucide-react';
+import { X, KeyRound, Wand2, ExternalLink } from 'lucide-react';
 import { Button } from '../ui/Button';
 import {
   getApiKey,
@@ -12,6 +12,12 @@ import {
   DEFAULT_MODEL,
   type ProviderId,
 } from '../../lib/ai';
+import {
+  ENHANCE_BACKENDS,
+  getEnhanceBackendId,
+  setEnhanceBackendId,
+  type EnhanceBackendId,
+} from '../../lib/enhance';
 
 interface Props {
   onClose: () => void;
@@ -21,6 +27,9 @@ export function SettingsModal({ onClose }: Props) {
   const [provider, setProviderState] = useState<ProviderId>(getProvider());
   const [key, setKey] = useState(getApiKey(provider));
   const [model, setModelValue] = useState(getModel(provider));
+  const [enhanceBackend, setEnhanceBackendState] = useState<EnhanceBackendId>(
+    getEnhanceBackendId(),
+  );
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -32,6 +41,7 @@ export function SettingsModal({ onClose }: Props) {
     setProvider(provider);
     setApiKey(key, provider);
     setModel(model, provider);
+    setEnhanceBackendId(enhanceBackend);
     setSaved(true);
     setTimeout(onClose, 600);
   };
@@ -88,9 +98,19 @@ export function SettingsModal({ onClose }: Props) {
           </section>
 
           <section className="space-y-2">
-            <div className="flex items-center gap-2">
-              <KeyRound size={16} className="text-accent-primary" />
-              <h3 className="font-medium text-[15px]">API key</h3>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <KeyRound size={16} className="text-accent-primary" />
+                <h3 className="font-medium text-[15px]">API key</h3>
+              </div>
+              <a
+                href={meta.keyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[12px] text-accent-primary hover:underline"
+              >
+                Get key <ExternalLink size={12} />
+              </a>
             </div>
             <input
               type="password"
@@ -100,6 +120,11 @@ export function SettingsModal({ onClose }: Props) {
               placeholder={meta.keyHint}
               className="w-full px-3 py-2.5 rounded-[10px] border border-border-subtle bg-surface-card text-[15px] focus:border-accent-primary focus:ring-2 focus:ring-accent-primary/15 outline-none"
             />
+            <p className="text-ink-muted text-[12px]">
+              {provider === 'anthropic' && 'Create a key in Console → Settings → API keys. Needs a paid Anthropic account.'}
+              {provider === 'openai' && 'Create a secret key at platform.openai.com. Image enhance (gpt-image-1) requires a verified organization.'}
+              {provider === 'gemini' && 'Create a free key in Google AI Studio. Image enhance uses gemini-2.5-flash-image (paid tier).'}
+            </p>
           </section>
 
           <section className="space-y-2">
@@ -114,6 +139,51 @@ export function SettingsModal({ onClose }: Props) {
             <p className="text-ink-muted text-[12px]">
               Default: {DEFAULT_MODEL[provider]}.
             </p>
+          </section>
+
+          <section className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Wand2 size={16} className="text-accent-primary" />
+              <h3 className="font-medium text-[15px]">Enhance backend</h3>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {ENHANCE_BACKENDS.map((b) => {
+                const needsKey =
+                  b.id === 'llm-gemini'
+                    ? 'gemini'
+                    : b.id === 'llm-openai'
+                      ? 'openai'
+                      : null;
+                const keyMissing = needsKey ? !getApiKey(needsKey) : false;
+                return (
+                  <button
+                    key={b.id}
+                    onClick={() => setEnhanceBackendState(b.id)}
+                    className={[
+                      'px-3 py-2.5 rounded-[10px] border text-left text-[13px] transition',
+                      enhanceBackend === b.id
+                        ? 'bg-accent-primary text-white border-accent-primary'
+                        : 'bg-surface-card text-ink-primary border-border-subtle hover:bg-bg-primary',
+                    ].join(' ')}
+                  >
+                    <span className="block font-medium">{b.label}</span>
+                    <span className={enhanceBackend === b.id ? 'text-white/80' : 'text-ink-muted'}>
+                      {b.hint}
+                    </span>
+                    {needsKey && keyMissing && (
+                      <span
+                        className={[
+                          'mt-1 block text-[11px] font-medium',
+                          enhanceBackend === b.id ? 'text-white' : 'text-red-600',
+                        ].join(' ')}
+                      >
+                        Needs a {needsKey === 'gemini' ? 'Google (Gemini)' : 'OpenAI'} API key above.
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
           </section>
 
           {saved && <p className="text-[12px] text-green-700">Saved.</p>}

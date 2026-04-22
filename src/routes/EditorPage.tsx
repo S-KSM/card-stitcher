@@ -8,6 +8,8 @@ import { ThumbStrip } from '../components/arrange/ThumbStrip';
 import { MetadataForm } from '../components/metadata/MetadataForm';
 import { ExportSheet } from '../components/export/ExportSheet';
 import { SettingsModal } from '../components/settings/SettingsModal';
+import { EnhanceAllButton } from '../components/enhance/EnhanceAllButton';
+import { EnhancePreviewModal } from '../components/enhance/EnhancePreviewModal';
 import { Button } from '../components/ui/Button';
 import { requestPersistence } from '../lib/db';
 import { autofillMetadata, getApiKey } from '../lib/ai';
@@ -23,6 +25,7 @@ export default function EditorPage() {
   const [saving, setSaving] = useState(false);
   const [autofilling, setAutofilling] = useState(false);
   const [autofillError, setAutofillError] = useState<string | null>(null);
+  const [enhancingPageId, setEnhancingPageId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -137,12 +140,17 @@ export default function EditorPage() {
 
         {hasPages && (
           <section>
-            <SectionTitle step={2} title="Arrange" />
+            <div className="flex items-center justify-between mb-3">
+              <SectionTitle step={2} title="Arrange" inline />
+              <EnhanceAllButton />
+            </div>
             <ThumbStrip
               order={editor.pageOrder}
               urls={editor.pageUrls}
+              pages={editor.pages}
               onReorder={editor.reorder}
               onRemove={editor.removePage}
+              onEnhance={setEnhancingPageId}
             />
           </section>
         )}
@@ -201,6 +209,12 @@ export default function EditorPage() {
       )}
       {showSettings && (
         <SettingsModal onClose={() => setShowSettings(false)} />
+      )}
+      {enhancingPageId && (
+        <EnhancePreviewModal
+          pageId={enhancingPageId}
+          onClose={() => setEnhancingPageId(null)}
+        />
       )}
     </div>
   );
